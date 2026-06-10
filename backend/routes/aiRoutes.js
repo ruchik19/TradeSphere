@@ -11,8 +11,3 @@ router.get('/analyze',analyzePortfolio);
 router.post('/simplify',simplifyJargon);
 
 export default router;
-
-
-
-
-
