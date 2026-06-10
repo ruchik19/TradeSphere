@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import connectDB from './config/db.js';
 import cookieParser from 'cookie-parser';
 import authRoutes from './routes/authRoutes.js'
+import portfolioRoutes from './routes/portfolioRoutes.js';
 
 connectDB();
 
@@ -17,9 +18,12 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use('/api/auth', authRoutes);
+app.use('/api/portfolio',portfolioRoutes);
+
 app.get('/', (req, res) => {
     res.send('Backend is actively running. Go to /api/status to check API health.');
 });
+
 app.get('/api/status', (req, res) => {
     res.json({ 
         message: "Smart Finance Aggregator Backend is running smoothly! 🚀",
