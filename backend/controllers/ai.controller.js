@@ -56,7 +56,8 @@ export const analyzePortfolio = async (req,res) => {
 export const simplifyJargon = async (req,res) => {
     try{
         const {term} = req.body;
-        if(!item) return res.status(400).json({error: "A term or text is required."});
+        //do a change of item to term 
+        if(!term) return res.status(400).json({error: "A term or text is required."});
 
         const response = await axios.post(`${AI_SERVER_URL}/api/ai/simplify`,{
             term_or_text:term
