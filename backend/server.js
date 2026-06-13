@@ -3,7 +3,10 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import connectDB from './config/db.js';
 import cookieParser from 'cookie-parser';
-import authRoutes from './routes/authRoutes.js'
+import authRoutes from './routes/authRoutes.js';
+import marketRoutes from './routes/marketRoutes.js';
+import portfolioRoutes from './routes/portfolioRoutes.js';
+import aiRoutes from './routes/aiRoutes.js';
 
 connectDB();
 
@@ -17,6 +20,9 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use('/api/auth', authRoutes);
+app.use('/api/market', marketRoutes);
+app.use('/api/portfolio', portfolioRoutes);
+app.use('/api/ai', aiRoutes);
 app.get('/', (req, res) => {
     res.send('Backend is actively running. Go to /api/status to check API health.');
 });
