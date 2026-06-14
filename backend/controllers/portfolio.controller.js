@@ -1,5 +1,5 @@
 // filename: backend/controllers/portfolioController.js
-import User from '../models/User.js';
+import User from '../models/user.js';
 
 // ==========================================
 // 1. ADD AN ASSET TO PORTFOLIO

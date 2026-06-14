@@ -1,1 +1,9 @@
 @import '@fortawesome/fontawesome-free/css/all.min.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Optional clean baseline for a trading platform */
+body {
+  @apply bg-slate-50 text-slate-900 antialiased;
+}

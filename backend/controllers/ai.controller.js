@@ -1,6 +1,6 @@
 // filename: backend/controllers/aiController.js
 import axios from 'axios';
-import User from '../models/User.js';
+import User from '../models/user.js';
 
 // This will point to your Python server (e.g., http://localhost:8000)
 // Ensure you add AI_SERVER_URL to your .env file!

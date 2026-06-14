@@ -34,22 +34,22 @@ const assetSchema = new mongoose.Schema({
 },{timestamps: true});
 
 const userSchema = new mongoose.Schema({
-    username:{
+    username: {
         type: String,
         required: true,
         unique: true,
         trim: true
     },
-    email:{
+    email: {
         type: String,
         required: true,
         unique: true,
         lowercase: true,
         trim: true
     },
-    password:{
-        type:String,
-        required: [true,'password is required'],
+    password: {
+        type: String,
+        required: [true, 'password is required'],
     },
     refreshToken: {
         type: String 
@@ -58,8 +58,33 @@ const userSchema = new mongoose.Schema({
         type: [String],
         default: []
     },
+    watchlist: {           // <-- ADDED HERE
+        type: [String],    // Stores an array of ticker strings (e.g., 'TCS.NS', 'RELIANCE.NS')
+        default: []        // Ensures new users start with an empty watchlist instead of undefined
+    },
+    virtualBalance: {
+        type: Number,
+        default: 100000 // Every user starts with ₹1,00,000 virtual cash
+    },
+    paperHoldings: [{
+        ticker: { type: String, required: true },
+        quantity: { type: Number, required: true },
+        avgBuyPrice: { type: Number, required: true }
+    }],
+    transactionHistory: [{
+        type: { 
+            type: String, 
+            enum: ['BUY', 'SELL'],
+            required: true 
+        },
+        ticker: { type: String, required: true },
+        quantity: { type: Number, required: true },
+        executionPrice: { type: Number, required: true },
+        totalAmount: { type: Number, required: true },
+        date: { type: Date, default: Date.now }
+    }],
     holdings: [assetSchema]
-},{timestamps:true});
+}, { timestamps: true });
 
 // 1. Hash the password BEFORE saving to the database
 userSchema.pre("save", async function (next) {

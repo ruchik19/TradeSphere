@@ -16,6 +16,9 @@ const router = express.Router();
 router.post('/signup', signupUser);
 router.post('/login', loginUser);
 router.post('/refresh', refreshSessionToken);
+router.get('/me', protect, (req, res) => {
+  res.status(200).json({ success: true, user: { id: req.user._id, username: req.user.username, email: req.user.email }});
+});
 
 // Protected Routes (Require active session cookies)
 router.post('/logout', protect, logoutUser);
