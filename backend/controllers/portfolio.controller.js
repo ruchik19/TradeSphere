@@ -1,4 +1,3 @@
-// filename: backend/controllers/portfolioController.js
 import User from '../models/user.js';
 
 // ==========================================
@@ -8,7 +7,7 @@ export const addAsset = async (req, res) => {
     try {
         const { ticker, companyName, quantity, avgBuyPrice, sector, broker } = req.body;
 
-        // Validation (Notice broker is removed from strict check so the fallback works)
+        // Validation (broker is optional, defaults to 'Manual')
         if (!ticker || !companyName || !quantity || !avgBuyPrice || !sector) {
             return res.status(400).json({ error: "Please provide all required asset details." });
         }
@@ -25,7 +24,7 @@ export const addAsset = async (req, res) => {
             quantity: Number(quantity),
             avgBuyPrice: Number(avgBuyPrice),
             sector,
-            broker: broker || 'Manual' // Fallback works perfectly now
+            broker: broker || 'Manual' 
         });
 
         await user.save();

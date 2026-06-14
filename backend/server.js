@@ -20,6 +20,7 @@ app.use(cors({
 }));
 app.use(express.json()); 
 app.use(cookieParser());
+app.use('/api/ai',aiRoutes);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/market', marketRoutes);
@@ -30,6 +31,7 @@ app.use('/api/paper-trade', paperTradeRoutes);
 app.get('/', (req, res) => {
     res.send('Backend is actively running. Go to /api/status to check API health.');
 });
+
 app.get('/api/status', (req, res) => {
     res.json({ 
         message: "Smart Finance Aggregator Backend is running smoothly! 🚀",

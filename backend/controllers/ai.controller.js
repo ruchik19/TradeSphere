@@ -1,9 +1,7 @@
-// filename: backend/controllers/aiController.js
 import axios from 'axios';
 import User from '../models/user.js';
 
-// This will point to your Python server (e.g., http://localhost:8000)
-// Ensure you add AI_SERVER_URL to your .env file!
+// This points to Tabish's Python server
 const AI_SERVER_URL = process.env.AI_SERVER_URL || 'http://localhost:8000';
 
 // ==========================================
@@ -35,14 +33,15 @@ export const analyzePortfolio = async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
 
-        if (!user.holdings || user.holdings.length === 0) {
+        // CRITICAL PATCH: Using 'paperHoldings' to match the trading engine
+        if (!user.paperHoldings || user.paperHoldings.length === 0) {
             return res.status(400).json({ error: "Portfolio is empty. Add assets before analyzing." });
         }
 
-        // Format the data exactly how the Python AI expects it (stripping out MongoDB specific IDs)
-        const formattedHoldings = user.holdings.map(asset => ({
+        // Format the data exactly how Tabish's Python AI expects it
+        const formattedHoldings = user.paperHoldings.map(asset => ({
             ticker: asset.ticker,
-            sector: asset.sector,
+            sector: asset.sector || "General",
             value: asset.quantity * asset.avgBuyPrice
         }));
 
@@ -64,7 +63,6 @@ export const simplifyJargon = async (req, res) => {
     try {
         const { term } = req.body;
         
-        // Fixed the typo here (!item -> !term)
         if (!term) {
             return res.status(400).json({ error: "A financial term or text snippet is required." });
         }

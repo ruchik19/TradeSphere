@@ -10,5 +10,6 @@ router.use(protect);
 router.post('/add', addAsset);
 router.get('/', getPortfolio);
 router.delete('/remove/:assetId', removeAsset);
+router.use(protect);
 
 export default router;
