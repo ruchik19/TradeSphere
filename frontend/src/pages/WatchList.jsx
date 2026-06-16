@@ -8,25 +8,57 @@ const Watchlist = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [isToggling, setIsToggling] = useState(false);
+  
+
 
   const fetchWatchlistData = async () => {
     try {
-      // 1. Get the array of tickers (e.g., ["TCS.NS", "RELIANCE.NS"])
-      const res = await apiClient.get('/watchlist');
-      const tickers = res.data.watchlist;
+      // 1. Get the list of tickers from the database
+      const dbRes = await apiClient.get('/watchlist');
+      const tickers = dbRes.data.watchlist;
 
-      // 2. Fetch live data for each ticker
-      const liveData = await Promise.all(
-        tickers.map(async (ticker) => {
-          const quoteRes = await apiClient.get(`/market/quote/${ticker}`);
-          return quoteRes.data.data;
-        })
-      );
-      setQuotes(liveData);
+      if (!tickers || tickers.length === 0) {
+        setQuotes([]); // FIX 1: Changed setWatchlist to setQuotes
+        return;
+      }
+
+      // 2. Fetch live data for each ticker, but bulletproof it!
+      const liveDataPromises = tickers.map(async (ticker) => {
+        try {
+          const res = await apiClient.get(`/market/quote/${ticker}`);
+          
+          // 1. THIS WILL REVEAL THE SECRET STRUCTURE IN YOUR CONSOLE
+          console.log(`Raw data for ${ticker}:`, res.data); 
+          
+          // 2. Safely unwrap it! If your backend wraps it in 'quote' or 'data', this grabs it.
+          // If it doesn't, it just returns res.data normally.
+          const actualStockData = res.data.quote || res.data.data || res.data;
+          
+          return actualStockData;
+        } catch (error) {
+          console.warn(`Could not fetch data for ${ticker}. It might be invalid.`);
+          
+          // FIX 3: Dummy object now perfectly matches your JSX variables!
+          return { 
+            symbol: ticker, 
+            companyName: 'Unknown or Invalid Stock',
+            currentPrice: 0, 
+            dayChange: 0,
+            dayChangePercent: 0,
+            invalid: true 
+          };
+        }
+      });
+
+      // 3. Wait for all of them to finish
+      const finalWatchlist = await Promise.all(liveDataPromises);
+      setQuotes(finalWatchlist); // FIX 1: Changed setWatchlist to setQuotes
+
     } catch (error) {
       console.error("Watchlist fetch error:", error);
     } finally {
-      setIsLoading(false);
+      // FIX 2: This guarantees the loading spinner turns off when fetching is done!
+      setIsLoading(false); 
     }
   };
 
@@ -38,10 +70,15 @@ const Watchlist = () => {
     if (!tickerToToggle) return;
     setIsToggling(true);
     try {
-      await apiClient.post('/watchlist/toggle', { ticker: tickerToToggle.toUpperCase() });
+      // Look closely at this line: we changed 'tickerInput' to 'tickerToToggle'
+      await apiClient.post('/watchlist', { ticker: tickerToToggle });
+      
       setSearch('');
       await fetchWatchlistData(); // Refresh the list
     } catch (error) {
+      // Extract the error message your Node backend sent, and pop it up on the screen!
+      const errorMsg = error.response?.data?.error || "Failed to add ticker";
+      alert(errorMsg); 
       console.error("Toggle error:", error);
     } finally {
       setIsToggling(false);
@@ -96,26 +133,35 @@ const Watchlist = () => {
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
-            {quotes.map((asset) => {
-              const isUp = asset.dayChange >= 0;
+            {quotes.map((asset, index) => {
+              // Safety fallback: ensure dayChange has a default value
+              const isUp = (asset.dayChange || 0) >= 0; 
+              
+              // Determine the safest name to display
+              const displayName = asset.symbol || asset.ticker || 'UNKNOWN';
+
               return (
-                <div key={asset.symbol} className="p-6 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                // Use index as a fallback key if symbol is completely missing
+                <div key={asset.symbol || index} className="p-6 flex items-center justify-between hover:bg-slate-50 transition-colors">
                   <div>
-                    <h3 className="font-bold text-slate-900 text-lg">{asset.symbol.replace('.NS', '')}</h3>
-                    <p className="text-sm text-slate-500">{asset.companyName}</p>
+                    {/* Safely run .replace() on our guaranteed displayName */}
+                    <h3 className="font-bold text-slate-900 text-lg">
+                      {displayName.replace('.NS', '')}
+                    </h3>
+                    <p className="text-sm text-slate-500">{asset.companyName || 'Unknown Company'}</p>
                   </div>
                   <div className="flex items-center gap-8">
                     <div className="text-right">
                       <h3 className="font-bold text-slate-900 text-lg">
-                        ₹{asset.currentPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        ₹{(asset.currentPrice || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </h3>
                       <p className={`text-sm font-semibold flex items-center justify-end gap-1 ${isUp ? 'text-emerald-600' : 'text-red-500'}`}>
                         {isUp ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                        {isUp ? '+' : ''}{asset.dayChangePercent?.toFixed(2)}%
+                        {isUp ? '+' : ''}{(asset.dayChangePercent || 0).toFixed(2)}%
                       </p>
                     </div>
                     <button 
-                      onClick={() => handleToggle(asset.symbol)}
+                      onClick={() => handleToggle(asset.symbol || asset.ticker)}
                       className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                       title="Remove from Watchlist"
                     >

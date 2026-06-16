@@ -2,6 +2,7 @@
 import YahooFinance from 'yahoo-finance2';
 
 const yahooFinance = new YahooFinance();
+    
 
 // Helper function: Indian stocks require an exchange suffix for Yahoo Finance
 // e.g., "RELIANCE" becomes "RELIANCE.NS" for the National Stock Exchange

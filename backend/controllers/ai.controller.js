@@ -33,15 +33,27 @@ export const analyzePortfolio = async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
 
-        // CRITICAL PATCH: Using 'paperHoldings' to match the trading engine
         if (!user.paperHoldings || user.paperHoldings.length === 0) {
             return res.status(400).json({ error: "Portfolio is empty. Add assets before analyzing." });
         }
 
-        // Format the data exactly how Tabish's Python AI expects it
+        // A quick dictionary to map tickers to their real-world sectors
+        const getSector = (ticker) => {
+            const sectors = {
+                'RELIANCE.NS': 'Energy',
+                'TCS.NS': 'Technology',
+                'INFY.NS': 'Technology',
+                'HDFCBANK.NS': 'Financial Services',
+                'ITC.NS': 'Consumer Defensive',
+                'BAJFINANCE.NS': 'Financial Services'
+            };
+            return sectors[ticker] || 'General';
+        };
+
+        // Format the data and inject the real sector
         const formattedHoldings = user.paperHoldings.map(asset => ({
             ticker: asset.ticker,
-            sector: asset.sector || "General",
+            sector: getSector(asset.ticker),
             value: asset.quantity * asset.avgBuyPrice
         }));
 

@@ -38,6 +38,31 @@ const Dashboard = () => {
   const virtualBalance = data?.virtualBalance || 0;
   const totalPortfolioValue = totalInvested + virtualBalance;
 
+  // --- NEW CODE: CALCULATE REAL ASSET ALLOCATION ---
+  const holdings = data?.holdings || [];
+  
+  // Group stocks by sector and add up their values
+  const sectorData = holdings.reduce((acc, stock) => {
+    // If your backend doesn't send a sector, we'll call it 'Other'
+    const sectorName = stock.sector || 'Other'; 
+    
+    // Calculate the value of this specific stock position
+    // (Adjust this if your backend sends pre-calculated 'totalValue' instead)
+    const stockValue = stock.currentPrice ? (stock.currentPrice * stock.quantity) : (stock.avgBuyPrice * stock.quantity);
+
+    if (!acc[sectorName]) {
+      acc[sectorName] = 0;
+    }
+    acc[sectorName] += stockValue;
+    return acc;
+  }, {});
+
+  // Convert the grouped data into the format Recharts expects: [{ name: 'IT', value: 5000 }, ...]
+  const realAllocationData = Object.keys(sectorData).map(sector => ({
+    name: sector,
+    value: sectorData[sector]
+  }));
+
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       {/* Header */}
@@ -98,9 +123,9 @@ const Dashboard = () => {
       {/* Analytical Layout Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          {/* We will pass live data to these charts next! */}
           <PortfolioGrowthChart />
-          <AssetAllocationChart />
+          {/* We are now passing the real data into the chart! */}
+          <AssetAllocationChart data={realAllocationData} /> 
         </div>
 
         {/* Top Movers Sidebar Panel */}

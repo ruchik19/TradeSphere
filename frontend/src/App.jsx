@@ -1,14 +1,18 @@
 // src/App.jsx
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from './context/AuthContext';
+import { useAuth } from './context/AuthContext.jsx';
 import MainLayout from './components/layout/MainLayout';
 import Dashboard from './pages/Dashboard';
-import Auth from './pages/Auth';
+import AuthPage from './pages/Auth';
 import { Loader2 } from 'lucide-react';
 import Market from './pages/Market';
 import Portfolio from './pages/Portfolio';
 import Watchlist from './pages/Watchlist';
 import SipCalculator from './pages/SipCalculator';
+import AiAdvisor from './pages/AiAdvisor';
+import JargonSimplifier from './pages/JargonSimplifier';
+import AiAnalyzer from './pages/AiAnalyzer';
+import LandingPage from './pages/LandingPage';
 
 // Bouncer Component: Checks if you are logged in before showing the page
 const ProtectedRoute = ({ children }) => {
@@ -32,22 +36,28 @@ const Placeholder = ({ title }) => (
 );
 
 function App() {
+  const { user } = useAuth();
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public Route */}
-        <Route path="/auth" element={<Auth />} />
+       <Route path="/" element={<LandingPage />} />
+
+      {/* 2. THE AUTH PAGE */}
+      <Route 
+        path="/auth" 
+        element={user ? <Navigate to="/dashboard" /> : <AuthPage />} 
+      />
 
         {/* Protected Routes wrapped in our Bouncer */}
-        <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
-          <Route index element={<Dashboard />} />
+        <Route element={user ? <MainLayout /> : <Navigate to="/auth" />}>
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="portfolio" element={<Portfolio />} />
           <Route path="market" element={<Market />} />
           <Route path="watchlist" element={<Watchlist />} />
           <Route path="sip-calculator" element={<SipCalculator />} />
-          <Route path="ai-analyzer" element={<Placeholder title="AI Analyzer" />} />
-          <Route path="jargon" element={<Placeholder title="Jargon Simplifier" />} />
-          <Route path="advisor" element={<Placeholder title="AI Advisor" />} />
+          <Route path="ai-analyzer" element={<AiAnalyzer />} />
+          <Route path="jargon" element={<JargonSimplifier />} />
+          <Route path="advisor" element={<AiAdvisor />} />
         </Route>
       </Routes>
     </BrowserRouter>

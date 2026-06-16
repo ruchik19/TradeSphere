@@ -8,7 +8,7 @@ const router = express.Router();
 router.use(protect);
 
 router.post('/chat', askChatbot);
-router.get('/analyze', analyzePortfolio);
+router.post('/analyze', analyzePortfolio);
 router.post('/simplify', simplifyJargon);
 
 export default router;
