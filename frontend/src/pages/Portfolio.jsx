@@ -8,7 +8,7 @@ const Portfolio = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [portfolioStats, setPortfolioStats] = useState({ totalValue: 0, totalInvested: 0 });
 
-  useEffect(() => {
+useEffect(() => {
     const fetchPortfolio = async () => {
       try {
         // 1. Get the raw holdings from the database
@@ -21,7 +21,11 @@ const Portfolio = () => {
           rawHoldings.map(async (asset) => {
             try {
               const quoteRes = await apiClient.get(`/market/quote/${asset.ticker}`);
-              const currentPrice = quoteRes.data.data.currentPrice;
+              
+              // BULLETPROOF UNWRAPPING: Catch the data no matter how the API sends it
+              const actualStockData = quoteRes.data.quote || quoteRes.data.data || quoteRes.data;
+              
+              const currentPrice = actualStockData.currentPrice;
               const totalValue = currentPrice * asset.quantity;
               const pnl = totalValue - (asset.avgBuyPrice * asset.quantity);
               const pnlPercent = (pnl / (asset.avgBuyPrice * asset.quantity)) * 100;
@@ -32,11 +36,18 @@ const Portfolio = () => {
                 totalValue,
                 pnl,
                 pnlPercent,
-                companyName: quoteRes.data.data.companyName
+                companyName: actualStockData.companyName || asset.companyName
               };
             } catch (err) {
-              // Fallback if Yahoo Finance drops a specific ticker
-              return { ...asset, currentPrice: asset.avgBuyPrice, totalValue: asset.avgBuyPrice * asset.quantity, pnl: 0, pnlPercent: 0 };
+              console.warn(`Fallback triggered for ${asset.ticker}`);
+              // Fallback if the market API drops a specific ticker
+              return { 
+                ...asset, 
+                currentPrice: asset.avgBuyPrice, 
+                totalValue: asset.avgBuyPrice * asset.quantity, 
+                pnl: 0, 
+                pnlPercent: 0 
+              };
             }
           })
         );
@@ -47,10 +58,10 @@ const Portfolio = () => {
         // 4. Calculate Allocation Percentages
         const finalHoldings = enrichedHoldings.map(asset => ({
           ...asset,
-          allocation: ((asset.totalValue / liveTotalValue) * 100).toFixed(1)
+          allocation: liveTotalValue > 0 ? ((asset.totalValue / liveTotalValue) * 100).toFixed(1) : 0
         }));
 
-        setHoldings(finalHoldings.sort((a, b) => b.totalValue - a.totalValue)); // Sort largest to smallest
+        setHoldings(finalHoldings.sort((a, b) => b.totalValue - a.totalValue)); 
         setPortfolioStats({ totalValue: liveTotalValue, totalInvested });
       } catch (error) {
         console.error("Failed to fetch portfolio data", error);
@@ -61,7 +72,6 @@ const Portfolio = () => {
 
     fetchPortfolio();
   }, []);
-
   if (isLoading) {
     return (
       <div className="h-[80vh] flex flex-col items-center justify-center text-indigo-600">

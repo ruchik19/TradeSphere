@@ -1,4 +1,3 @@
-// src/pages/Watchlist.jsx
 import { useState, useEffect } from 'react';
 import { Star, Trash2, Search, TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
 import apiClient from '../api/axios';
@@ -8,39 +7,29 @@ const Watchlist = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [isToggling, setIsToggling] = useState(false);
-  
-
 
   const fetchWatchlistData = async () => {
     try {
-      // 1. Get the list of tickers from the database
       const dbRes = await apiClient.get('/watchlist');
       const tickers = dbRes.data.watchlist;
 
       if (!tickers || tickers.length === 0) {
-        setQuotes([]); // FIX 1: Changed setWatchlist to setQuotes
+        setQuotes([]); 
         return;
       }
 
-      // 2. Fetch live data for each ticker, but bulletproof it!
       const liveDataPromises = tickers.map(async (ticker) => {
         try {
           const res = await apiClient.get(`/market/quote/${ticker}`);
-          
-          // 1. THIS WILL REVEAL THE SECRET STRUCTURE IN YOUR CONSOLE
-          console.log(`Raw data for ${ticker}:`, res.data); 
-          
-          // 2. Safely unwrap it! If your backend wraps it in 'quote' or 'data', this grabs it.
-          // If it doesn't, it just returns res.data normally.
           const actualStockData = res.data.quote || res.data.data || res.data;
           
-          return actualStockData;
+          // Force the object to remember its original database name!
+          return { ...actualStockData, dbTicker: ticker }; 
         } catch (error) {
-          console.warn(`Could not fetch data for ${ticker}. It might be invalid.`);
-          
-          // FIX 3: Dummy object now perfectly matches your JSX variables!
+          console.warn(`Could not fetch data for ${ticker}.`);
           return { 
             symbol: ticker, 
+            dbTicker: ticker, // Remember it here too
             companyName: 'Unknown or Invalid Stock',
             currentPrice: 0, 
             dayChange: 0,
@@ -50,14 +39,12 @@ const Watchlist = () => {
         }
       });
 
-      // 3. Wait for all of them to finish
       const finalWatchlist = await Promise.all(liveDataPromises);
-      setQuotes(finalWatchlist); // FIX 1: Changed setWatchlist to setQuotes
+      setQuotes(finalWatchlist);
 
     } catch (error) {
       console.error("Watchlist fetch error:", error);
     } finally {
-      // FIX 2: This guarantees the loading spinner turns off when fetching is done!
       setIsLoading(false); 
     }
   };
@@ -66,20 +53,37 @@ const Watchlist = () => {
     fetchWatchlistData();
   }, []);
 
-  const handleToggle = async (tickerToToggle) => {
-    if (!tickerToToggle) return;
+  const handleAdd = async (tickerToAdd) => {
+    if (!tickerToAdd) return;
     setIsToggling(true);
     try {
-      // Look closely at this line: we changed 'tickerInput' to 'tickerToToggle'
-      await apiClient.post('/watchlist', { ticker: tickerToToggle });
-      
+      await apiClient.post('/watchlist', { ticker: tickerToAdd });
       setSearch('');
-      await fetchWatchlistData(); // Refresh the list
+      await fetchWatchlistData(); 
     } catch (error) {
-      // Extract the error message your Node backend sent, and pop it up on the screen!
       const errorMsg = error.response?.data?.error || "Failed to add ticker";
       alert(errorMsg); 
-      console.error("Toggle error:", error);
+      console.error("Add error:", error);
+    } finally {
+      setIsToggling(false);
+    }
+  };
+
+  const handleRemove = async (tickerToRemove) => {
+    if (!tickerToRemove) return;
+    setIsToggling(true);
+    try {
+      await apiClient.delete(`/watchlist/${tickerToRemove}`);
+      await fetchWatchlistData(); 
+    } catch (error) {
+      try {
+        await apiClient.delete('/watchlist', { data: { ticker: tickerToRemove } });
+        await fetchWatchlistData();
+      } catch (innerError) {
+        const errorMsg = innerError.response?.data?.error || "Failed to remove ticker";
+        alert(errorMsg); 
+        console.error("Remove error:", innerError);
+      }
     } finally {
       setIsToggling(false);
     }
@@ -101,7 +105,6 @@ const Watchlist = () => {
         <p className="text-slate-500">Quick monitoring of your favourite tickers.</p>
       </div>
 
-      {/* Add to Watchlist Bar */}
       <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-6 shadow-sm flex gap-4">
         <div className="relative flex-1">
           <input
@@ -109,13 +112,13 @@ const Watchlist = () => {
             placeholder="Add a ticker (e.g., INFY.NS)"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleToggle(search)}
+            onKeyDown={(e) => e.key === 'Enter' && handleAdd(search)}
             className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
           <Search size={18} className="absolute left-4 top-3.5 text-slate-400" />
         </div>
         <button 
-          onClick={() => handleToggle(search)}
+          onClick={() => handleAdd(search)}
           disabled={isToggling || !search}
           className="bg-slate-900 text-white px-6 py-3 rounded-xl font-medium hover:bg-slate-800 transition-colors disabled:opacity-70 flex items-center gap-2"
         >
@@ -124,7 +127,6 @@ const Watchlist = () => {
         </button>
       </div>
 
-      {/* Watchlist Grid */}
       <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
         {quotes.length === 0 ? (
           <div className="p-12 text-center text-slate-500">
@@ -134,17 +136,12 @@ const Watchlist = () => {
         ) : (
           <div className="divide-y divide-slate-100">
             {quotes.map((asset, index) => {
-              // Safety fallback: ensure dayChange has a default value
               const isUp = (asset.dayChange || 0) >= 0; 
-              
-              // Determine the safest name to display
               const displayName = asset.symbol || asset.ticker || 'UNKNOWN';
 
               return (
-                // Use index as a fallback key if symbol is completely missing
                 <div key={asset.symbol || index} className="p-6 flex items-center justify-between hover:bg-slate-50 transition-colors">
                   <div>
-                    {/* Safely run .replace() on our guaranteed displayName */}
                     <h3 className="font-bold text-slate-900 text-lg">
                       {displayName.replace('.NS', '')}
                     </h3>
@@ -161,7 +158,7 @@ const Watchlist = () => {
                       </p>
                     </div>
                     <button 
-                      onClick={() => handleToggle(asset.symbol || asset.ticker)}
+                      onClick={() => handleRemove(asset.dbTicker)} // Strictly uses dbTicker for deletion
                       className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                       title="Remove from Watchlist"
                     >

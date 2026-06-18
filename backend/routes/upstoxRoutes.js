@@ -1,10 +1,11 @@
 import express from 'express';
-import { initiateUpstoxLogin, handleUpstoxCallback } from '../controllers/upstoxController.js';
-import { verifyJWT } from '../middleware/auth.js';
+import { initiateUpstoxLogin, handleUpstoxCallback, getUpstoxHoldings } from '../controllers/upstoxController.js';
+import protect from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.get('/connect', verifyJWT, initiateUpstoxLogin); // User clicks "Connect"
-router.get('/callback', verifyJWT, handleUpstoxCallback); // Upstox bounces back here
+router.get('/connect', protect, initiateUpstoxLogin);
+router.get('/callback', handleUpstoxCallback);
+router.get('/holdings', protect, getUpstoxHoldings);
 
 export default router;

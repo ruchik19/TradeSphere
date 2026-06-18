@@ -27,23 +27,19 @@ export const addToWatchlist = async (req, res) => {
         const { ticker } = req.body;
         if (!ticker) return res.status(400).json({ error: "Ticker is required" });
 
-        const user = await User.findById(req.user._id);
-        
-        // Initialize array if it doesn't exist yet
-        if (!user.watchlist) user.watchlist = [];
-        
-        // Prevent duplicates
-        if (user.watchlist.includes(ticker.toUpperCase())) {
-            return res.status(400).json({ error: "Ticker is already in your watchlist" });
-        }
+        const cleanTicker = ticker.toUpperCase().trim();
 
-        user.watchlist.push(ticker.toUpperCase());
-        await user.save();
+        // Direct DB $addToSet bypasses validation errors AND perfectly prevents duplicate tickers!
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user._id,
+            { $addToSet: { watchlist: cleanTicker } },
+            { returnDocument: 'after' } // Fixes the Mongoose deprecation warning
+        );
 
-        res.status(200).json({ success: true, watchlist: user.watchlist });
+        res.status(200).json({ success: true, watchlist: updatedUser?.watchlist || [] });
     } catch (error) {
         console.error("ADD Watchlist Error:", error);
-        res.status(500).json({ error: "Failed to add to watchlist" });
+        res.status(500).json({ error: `Database Error: ${error.message}` });
     }
 };
 
@@ -52,17 +48,25 @@ export const addToWatchlist = async (req, res) => {
 // ==========================================
 export const removeFromWatchlist = async (req, res) => {
     try {
-        const { ticker } = req.params;
-        const user = await User.findById(req.user._id);
+        // This catches BOTH the URL parameter and the body payload
+        const ticker = req.params.ticker || req.body.ticker;
         
-        if (!user.watchlist) user.watchlist = [];
+        if (!ticker) {
+            return res.status(400).json({ error: "Ticker is required for deletion." });
+        }
 
-        user.watchlist = user.watchlist.filter(t => t !== ticker.toUpperCase());
-        await user.save();
+        const cleanTicker = ticker.toUpperCase().trim();
 
-        res.status(200).json({ success: true, watchlist: user.watchlist });
+        // Direct DB $pull bypasses Mongoose validation errors entirely
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user._id,
+            { $pull: { watchlist: cleanTicker } },
+            { returnDocument: 'after' } // Fixes the Mongoose deprecation warning
+        );
+
+        res.status(200).json({ success: true, watchlist: updatedUser?.watchlist || [] });
     } catch (error) {
         console.error("REMOVE Watchlist Error:", error);
-        res.status(500).json({ error: "Failed to remove from watchlist" });
+        res.status(500).json({ error: `Database Error: ${error.message}` });
     }
 };
