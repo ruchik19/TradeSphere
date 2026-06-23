@@ -16,7 +16,7 @@ connectDB();
 dotenv.config();
 const app = express();
 app.use(cors({
-    origin: 'http://localhost:5173', 
+    origin: 'https://trade-sphere-46vk.vercel.app', 
     credentials: true
 }));
 app.use(express.json()); 
