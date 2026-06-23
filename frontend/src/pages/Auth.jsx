@@ -1,7 +1,7 @@
 // src/pages/Auth.jsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext.jsx';
 import { Briefcase, Mail, Lock, User, AlertCircle, Loader2 } from 'lucide-react';
 
 const Auth = () => {
