@@ -48,7 +48,7 @@ export const handleUpstoxCallback = async (req, res) => {
         });
 
         // 4. Send them back to the frontend aggregator page
-        res.redirect('http://localhost:5173/aggregator?connected=upstox');
+        res.redirect('https://trade-sphere-46vk.vercel.app/aggregator?connected=upstox');
     } catch (error) {
         // This will print the exact reason Upstox failed in your terminal
         console.error("OAuth Error Detail:", error.response?.data || error.message);
