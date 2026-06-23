@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Wallet, Loader2, Link as LinkIcon, ArrowLeft } from 'lucide-react';
-import apiClient from '../api/axios';
+import apiClient from '../api/axios.js';
 // Change your react-router-dom import to include useSearchParams
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
