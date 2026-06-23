@@ -1,6 +1,6 @@
 // src/context/AuthContext.jsx
 import { createContext, useState, useEffect, useContext } from 'react';
-import apiClient from '../api/axios'; // The Axios bridge we built earlier
+import apiClient from '../api/axios.js'; // The Axios bridge we built earlier
 
 const AuthContext = createContext();
 
