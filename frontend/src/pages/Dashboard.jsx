@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Wallet, TrendingUp, Sparkles, Loader2 } from 'lucide-react';
-import { PortfolioGrowthChart, AssetAllocationChart } from '../components/PortfolioCharts';
-import apiClient from '../api/axios';
+import { PortfolioGrowthChart, AssetAllocationChart } from '../components/PortfolioCharts.jsx';
+import apiClient from '../api/axios.js';
 
 const Dashboard = () => {
   const [sandboxData, setSandboxData] = useState(null);
