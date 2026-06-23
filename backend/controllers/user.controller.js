@@ -10,11 +10,9 @@ const generateAccessAndRefreshTokens = async (userId) => {
     try {
         const user = await User.findById(userId);
         
-        // Use the instance methods we just built in the Mongoose Model!
         const accessToken = user.generateAccessToken();
         const refreshToken = user.generateRefreshToken();
 
-        // Attach the refresh token to the user document and save it to the DB
         user.refreshToken = refreshToken;
         await user.save({ validateBeforeSave: false });
 
@@ -25,11 +23,11 @@ const generateAccessAndRefreshTokens = async (userId) => {
     }
 };
 
-// Centralized cookie configuration
+// Centralized VIP Cookie Configuration
 const cookieOptions = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: true,
+    sameSite: 'none',
 };
 
 // ==========================================
@@ -44,7 +42,6 @@ export const signupUser = async (req, res) => {
             return res.status(409).json({ error: "User with email or username already exists" });
         }
 
-        // Create the user. The Mongoose pre-save hook automatically hashes the password!
         const user = await User.create({
             username,
             email,
@@ -54,8 +51,6 @@ export const signupUser = async (req, res) => {
         });
 
         const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
-
-        // Fetch the user again, explicitly stripping out the password and token from the response data
         const createdUser = await User.findById(user._id).select("-password -refreshToken");
 
         return res.status(201)
@@ -85,14 +80,12 @@ export const loginUser = async (req, res) => {
             return res.status(404).json({ error: "User does not exist" });
         }
 
-        // Use the Model method to compare passwords
         const isPasswordValid = await user.isPasswordCorrect(password);
         if (!isPasswordValid) {
             return res.status(401).json({ error: "Invalid user credentials" });
         }
 
         const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
-
         const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
 
         return res.status(200)
@@ -122,13 +115,11 @@ export const refreshSessionToken = async (req, res) => {
         }
 
         const decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET);
-
         const user = await User.findById(decodedToken._id);
         if (!user) {
             return res.status(401).json({ error: "Invalid refresh token" });
         }
 
-        // Security check: Ensure the cookie token matches the one saved in the database
         if (incomingRefreshToken !== user.refreshToken) {
             return res.status(401).json({ error: "Refresh token is expired or used" });
         }
@@ -151,11 +142,10 @@ export const refreshSessionToken = async (req, res) => {
 // ==========================================
 export const logoutUser = async (req, res) => {
     try {
-        // Unset the refreshToken in the database so the old token can never be used again
         await User.findByIdAndUpdate(
             req.user._id, 
             { $unset: { refreshToken: 1 } },
-            { new: true }
+            { returnDocument: 'after' } // <-- Fixed the Mongoose warning here!
         );
 
         return res.status(200)
@@ -168,10 +158,12 @@ export const logoutUser = async (req, res) => {
         res.status(500).json({ error: "Internal server error during logout" });
     }
 };
+
+// ==========================================
+// 5. GET CURRENT USER
+// ==========================================
 export const getCurrentUser = async (req, res) => {
     try {
-        // The `protect` middleware has already verified the cookie and attached the user to `req.user`
-        // It also already stripped out the password, so it's perfectly safe to send!
         res.status(200).json({
             success: true,
             user: req.user,
@@ -194,7 +186,6 @@ export const updateAccountDetails = async (req, res) => {
             return res.status(400).json({ error: "Please provide a username or email to update" });
         }
 
-        // We use req.user._id because only logged-in users can update their own accounts
         const updatedUser = await User.findByIdAndUpdate(
             req.user._id,
             {
@@ -203,7 +194,7 @@ export const updateAccountDetails = async (req, res) => {
                     ...(email && { email })
                 }
             },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true } // <-- Fixed Mongoose warning here too!
         ).select("-password -refreshToken");
 
         res.status(200).json({
@@ -217,25 +208,25 @@ export const updateAccountDetails = async (req, res) => {
         res.status(500).json({ error: "Internal server error updating account" });
     }
 };
+
+// ==========================================
+// 7. CHANGE PASSWORD
+// ==========================================
 export const changeCurrentPassword = async (req, res) => {
     try {
         const { oldPassword, newPassword } = req.body;
 
-        // Ensure both fields are provided
         if (!oldPassword || !newPassword) {
             return res.status(400).json({ error: "Both old and new passwords are required" });
         }
 
-        // Fetch the user using the ID provided by the protect middleware
         const user = await User.findById(req.user._id);
 
-        // Verify the old password using the Model's instance method
         const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
         if (!isPasswordCorrect) {
             return res.status(401).json({ error: "Invalid old password" });
         }
 
-        // Assign the new password. The pre("save") hook in User.js will automatically hash it!
         user.password = newPassword;
         await user.save({ validateBeforeSave: false });
 
