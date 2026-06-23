@@ -1,7 +1,7 @@
 // src/pages/Market.jsx
 import { useState, useEffect } from 'react';
 import { Search, TrendingUp, TrendingDown, ExternalLink, Loader2, Wallet } from 'lucide-react';
-import apiClient from '../api/axios';
+import apiClient from '../api/axios.js';
 
 // Indian market tickers for the quick-select grid
 const trendingStocks = [
