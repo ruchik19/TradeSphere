@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { BookOpen, Search, Lightbulb, Target, AlertTriangle, Loader2 } from 'lucide-react';
-import apiClient from '../api/axios';
+import apiClient from '../api/axios.js';
 
 const JargonSimplifier = () => {
   const [term, setTerm] = useState('');
