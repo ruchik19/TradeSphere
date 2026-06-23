@@ -1,12 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext.jsx';
-import MainLayout from './components/layout/MainLayout.jsx';
+import MainLayout from './components/Layout/MainLayout.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import AuthPage from './pages/Auth.jsx';
 import { Loader2 } from 'lucide-react';
 import Market from './pages/Market.jsx';
 import Portfolio from './pages/Portfolio.jsx';
-import Watchlist from './pages/Watchlist.jsx';
+import Watchlist from './pages/WatchList.jsx';
 import SipCalculator from './pages/SipCalculator.jsx';
 import AiAdvisor from './pages/AiAdvisor.jsx';
 import JargonSimplifier from './pages/JargonSimplifier.jsx';
