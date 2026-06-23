@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Send, Bot, User, Loader2 } from 'lucide-react';
-import apiClient from '../api/axios';
+import apiClient from '../api/axios.js';
 
 const AiAdvisor = () => {
   const [messages, setMessages] = useState([{ role: 'ai', content: "Hello! I'm your AI Finance Tutor. Ask me any financial questions." }]);
