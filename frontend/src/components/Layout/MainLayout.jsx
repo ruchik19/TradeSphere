@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import apiClient from '../../api/axios';
+import { useAuth } from '../../context/AuthContext.jsx';
+import apiClient from '../../api/axios.js';
 import { 
   LayoutDashboard, Briefcase, TrendingUp, Star, Trophy, 
   Calculator, Activity, BookOpen, Bot, User, Wallet, LogOut 
