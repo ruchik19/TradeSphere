@@ -51,6 +51,10 @@ const userSchema = new mongoose.Schema({
         totalAmount: { type: Number, required: true },
         date: { type: Date, default: Date.now }
     }],
+    portfolioHistory: [{
+        date: { type: String, required: true },
+        value: { type: Number, required: true }
+    }],
     holdings: [assetSchema],
     brokerAuths: [brokerAuthSchema]
 }, { timestamps: true });

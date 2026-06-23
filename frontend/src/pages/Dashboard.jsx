@@ -8,8 +8,9 @@ const Dashboard = () => {
   const [sandboxData, setSandboxData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const [portfolioHistory, setPortfolioHistory] = useState([]);
 
-useEffect(() => {
+  useEffect(() => {
     const fetchDashboardData = async () => {
       setIsLoading(true);
       try {
@@ -21,24 +22,41 @@ useEffect(() => {
         if (dashboardData.paperHoldings && dashboardData.paperHoldings.length > 0) {
           const liveHoldingsPromises = dashboardData.paperHoldings.map(async (stock) => {
             try {
-              // Fetch the live quote for each ticker
               const quoteRes = await apiClient.get(`/market/quote/${stock.ticker}`);
               const liveData = quoteRes.data.quote || quoteRes.data.data || quoteRes.data;
               
-              // Attach the live market price to the stock object
               return { 
                 ...stock, 
                 currentPrice: liveData.currentPrice || stock.avgBuyPrice 
               };
             } catch (error) {
               console.warn(`Could not fetch live price for ${stock.ticker}`);
-              return stock; // Return original database stock if fetch fails
+              return stock; 
             }
           });
 
-          // Wait for all live prices to finish downloading, then overwrite the old array
           dashboardData.paperHoldings = await Promise.all(liveHoldingsPromises);
         }
+
+        // --- NEW: Calculate the total value and save the daily snapshot! ---
+        const calcVirtualBalance = dashboardData.virtualBalance || 0;
+        const calcHoldingsValue = (dashboardData.paperHoldings || []).reduce((acc, stock) => {
+           return acc + ((stock.currentPrice || stock.avgBuyPrice) * stock.quantity);
+        }, 0);
+        const snapshotValue = calcVirtualBalance + calcHoldingsValue;
+
+        const todayStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+        
+        try {
+          const historyRes = await apiClient.post('/paper-trade/history', {
+            date: todayStr,
+            value: snapshotValue
+          });
+          setPortfolioHistory(historyRes.data.history || []);
+        } catch (err) {
+          console.error("Could not save history snapshot", err);
+        }
+        // -------------------------------------------------------------------
 
         // 3. Save the final data (which now includes live prices) to state
         setSandboxData(dashboardData);
@@ -64,15 +82,13 @@ useEffect(() => {
   const virtualBalance = sandboxData?.virtualBalance || 0;
   const sandboxHoldings = sandboxData?.paperHoldings || [];
 
-  // 1. Calculate the LIVE value of your holdings (Quantity * Current Price)
   const currentHoldingsValue = sandboxHoldings.reduce((acc, stock) => {
-    // Fallback to avgBuyPrice if the live currentPrice hasn't loaded yet
     const priceToUse = stock.currentPrice || stock.avgBuyPrice;
     return acc + (priceToUse * stock.quantity);
   }, 0);
 
-  // 2. Total Net Worth = Available Cash + LIVE Market Value of Holdings
   const totalPortfolioValue = virtualBalance + currentHoldingsValue;
+  
   const sectorData = sandboxHoldings.reduce((acc, stock) => {
     const sectorName = stock.sector || 'Other'; 
     const stockValue = stock.currentPrice ? (stock.currentPrice * stock.quantity) : (stock.avgBuyPrice * stock.quantity);
@@ -80,6 +96,7 @@ useEffect(() => {
     acc[sectorName] += stockValue;
     return acc;
   }, {});
+  
   const realAllocationData = Object.keys(sectorData).map(sector => ({
     name: sector, value: sectorData[sector]
   }));
@@ -153,7 +170,8 @@ useEffect(() => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            <PortfolioGrowthChart />
+            {/* NEW: Passed the state to the chart! */}
+            <PortfolioGrowthChart data={portfolioHistory} />
             <AssetAllocationChart data={realAllocationData} />
           </div>
           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm h-fit">

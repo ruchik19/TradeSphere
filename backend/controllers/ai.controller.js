@@ -2,7 +2,7 @@ import axios from 'axios';
 import User from '../models/user.js';
 
 // This points to Tabish's Python server
-const AI_SERVER_URL = process.env.AI_SERVER_URL || 'http://localhost:8000';
+const AI_SERVER_URL = process.env.AI_SERVER_URL || 'http://localhost:8001';
 
 // ==========================================
 // 1. CHATBOT BRIDGE

@@ -120,3 +120,35 @@ export const getPaperPortfolio = async (req, res) => {
         res.status(500).json({ error: "Failed to fetch paper trading dashboard." });
     }
 };
+
+//portfolio growth snapshot
+export const savePortfolioSnapshot = async (req, res) => {
+    try {
+        const { date, value } = req.body;
+        // Adjust the model search based on where you put the schema update
+        const user = await User.findById(req.user._id); 
+
+        if (!user.portfolioHistory) user.portfolioHistory = [];
+
+        // Check if we already have a data point for today
+        const existingIndex = user.portfolioHistory.findIndex(h => h.date === date);
+
+        if (existingIndex !== -1) {
+            user.portfolioHistory[existingIndex].value = value; // Update today's live value
+        } else {
+            user.portfolioHistory.push({ date, value }); // Create a new day's point
+        }
+
+        // Use modern returnDocument syntax
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user._id,
+            { portfolioHistory: user.portfolioHistory },
+            { returnDocument: 'after' }
+        );
+
+        res.status(200).json({ success: true, history: updatedUser.portfolioHistory });
+    } catch (error) {
+        console.error("Snapshot Error:", error);
+        res.status(500).json({ error: "Failed to save history" });
+    }
+};
