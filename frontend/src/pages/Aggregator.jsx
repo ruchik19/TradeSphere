@@ -27,7 +27,7 @@ const Aggregator = () => {
 
   const handleConnectUpstox = () => {
     const token = localStorage.getItem("accessToken") || ""; 
-    window.location.href = `http://localhost:8000/api/upstox/connect?token=${token}`;
+    window.location.href = `https://tradesphere-1-ey8j.onrender.com/api/upstox/connect?token=${token}`;
   };
 
   if (isLoading) {
