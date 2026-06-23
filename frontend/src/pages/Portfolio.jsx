@@ -1,7 +1,7 @@
 // src/pages/Portfolio.jsx
 import { useState, useEffect } from 'react';
 import { Loader2, TrendingUp, TrendingDown, Briefcase } from 'lucide-react';
-import apiClient from '../api/axios';
+import apiClient from '../api/axios.js';
 
 const Portfolio = () => {
   const [holdings, setHoldings] = useState([]);
