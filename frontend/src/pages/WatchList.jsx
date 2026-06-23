@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Star, Trash2, Search, TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
-import apiClient from '../api/axio.js';
+import apiClient from '../api/axios.js';
 
 const Watchlist = () => {
   const [quotes, setQuotes] = useState([]);
