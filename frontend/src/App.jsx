@@ -1,18 +1,18 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext.jsx';
-import MainLayout from './components/layout/MainLayout';
-import Dashboard from './pages/Dashboard';
-import AuthPage from './pages/Auth';
+import MainLayout from './components/layout/MainLayout.jsx';
+import Dashboard from './pages/Dashboard.jsx';
+import AuthPage from './pages/Auth.jsx';
 import { Loader2 } from 'lucide-react';
-import Market from './pages/Market';
-import Portfolio from './pages/Portfolio';
-import Watchlist from './pages/Watchlist';
-import SipCalculator from './pages/SipCalculator';
-import AiAdvisor from './pages/AiAdvisor';
-import JargonSimplifier from './pages/JargonSimplifier';
-import AiAnalyzer from './pages/AiAnalyzer';
-import LandingPage from './pages/LandingPage';
-import Aggregator from './pages/Aggregator';
+import Market from './pages/Market.jsx';
+import Portfolio from './pages/Portfolio.jsx';
+import Watchlist from './pages/Watchlist.jsx';
+import SipCalculator from './pages/SipCalculator.jsx';
+import AiAdvisor from './pages/AiAdvisor.jsx';
+import JargonSimplifier from './pages/JargonSimplifier.jsx';
+import AiAnalyzer from './pages/AiAnalyzer.jsx';
+import LandingPage from './pages/LandingPage.jsx';
+import Aggregator from './pages/Aggregator.jsx';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
